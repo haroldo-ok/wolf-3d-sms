@@ -1,0 +1,63 @@
+# every shareware map loads and puts the player on its start tile
+symbols build_dbg/game.noi
+run 200
+poke dbg_map 1 w1
+run 260
+expect dbg_tx == 29 w1
+expect dbg_ty == 57 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv01.ppm
+poke dbg_map 2 w1
+run 260
+expect dbg_tx == 16 w1
+expect dbg_ty == 61 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv02.ppm
+poke dbg_map 3 w1
+run 260
+expect dbg_tx == 20 w1
+expect dbg_ty == 1 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv03.ppm
+poke dbg_map 4 w1
+run 260
+expect dbg_tx == 3 w1
+expect dbg_ty == 3 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv04.ppm
+poke dbg_map 5 w1
+run 260
+expect dbg_tx == 32 w1
+expect dbg_ty == 34 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv05.ppm
+poke dbg_map 6 w1
+run 260
+expect dbg_tx == 44 w1
+expect dbg_ty == 23 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv06.ppm
+poke dbg_map 7 w1
+run 260
+expect dbg_tx == 40 w1
+expect dbg_ty == 44 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv07.ppm
+poke dbg_map 8 w1
+run 260
+expect dbg_tx == 34 w1
+expect dbg_ty == 58 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv08.ppm
+poke dbg_map 9 w1
+run 260
+expect dbg_tx == 34 w1
+expect dbg_ty == 58 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv09.ppm
+poke dbg_map 10 w1
+run 260
+expect dbg_tx == 5 w1
+expect dbg_ty == 38 w1
+expect dbg_hp == 100 w2
+screenshot /tmp/s/lv10.ppm

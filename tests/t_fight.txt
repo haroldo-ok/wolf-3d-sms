@@ -1,0 +1,96 @@
+# warp 2 tiles in front of a standing guard (33,9) and shoot: he dies, 100 points
+# (this failed while the compiler left garbage in player->tilex, which made CheckLine fail;
+# 20 shots because the guard moves about and the pistol damage is random)
+symbols build_dbg/game.noi
+run 300
+poke dbg_god 1 w1
+poke dbg_wx 33 w1
+poke dbg_wy 11 w1
+poke dbg_wdir 0 w1
+poke dbg_warp 1 w1
+run 14
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+expect dbg_tx == 33 w1
+expect dbg_kills >= 1 w2
+expect dbg_score >= 100 w2
+expectpace 0
+screenshot /tmp/s/t_fight.ppm

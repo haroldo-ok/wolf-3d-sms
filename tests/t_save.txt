@@ -1,0 +1,140 @@
+# saved games: save, damage the state, load: the hash of the whole game (maps included) must be unchanged.
+# (needs the DET build: dbg_hash)  three situations: the start, after a fight, with a push wall moving
+symbols build_det/game.noi
+run 200
+waituntil game_frames >= 3 20000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 900 w2
+waitchange game_frames 900 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+# a push wall in motion, doors, actors
+poke dbg_god 1 w1
+poke dbg_wx 31 w1
+poke dbg_wy 22 w1
+poke dbg_wdir 3 w1
+poke dbg_warp 1 w1
+waitchange game_frames 900 w2
+waitchange game_frames 900 w2
+hold 2
+waituntil game_frames >= 14 20000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 900 w2
+waitchange game_frames 900 w2
+hold none
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+
+# every level at its start (the most actors): it fits the slot (5.3 KB) and comes back exactly
+poke dbg_map 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 2 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 3 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 4 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 5 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 6 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 7 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 8 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 9 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2
+poke dbg_map 10 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+poke dbg_svreq 1 w1
+waitchange game_frames 3000 w2
+waitchange game_frames 3000 w2
+expect dbg_sv_w == 1 w1
+expect dbg_sv_r == 1 w1
+expect dbg_sv_ok == 1 w1
+print save_len w2

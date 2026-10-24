@@ -1,0 +1,19 @@
+# benchmark on the RELEASE rom (no debug hooks): the t_walk route; prints the game frame counter
+symbols build/game.noi
+run 400
+print game_frames w2
+hold up
+run 70
+hold 2
+run 50
+hold none
+run 120
+hold up
+run 400
+hold 2
+run 50
+hold none
+run 150
+hold up
+run 200
+print game_frames w2

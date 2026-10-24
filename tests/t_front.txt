@@ -1,0 +1,43 @@
+# the front end of the release ROM: every screen is up when it should be (scr_cur = the id of the screen on show,
+# tools/wl_pics.py: 0 pg13, 1 title, 2 credits, 3 main_title, 4 main_game, 5 newgame, 6 sound, 16 psyched)
+symbols build/game.noi
+run 60
+expect scr_cur == 0 w1
+run 330
+expect scr_cur == 1 w1
+screenshot /tmp/s/t_front_title.ppm
+# the attract loop goes on by itself
+run 500
+expect scr_cur == 2 w1
+tap 1
+run 100
+expect scr_cur == 3 w1
+screenshot /tmp/s/t_front_menu.ppm
+# the sound menu and back
+tap down
+run 20
+tap 1
+run 100
+expect scr_cur == 6 w1
+tap 2
+run 100
+expect scr_cur == 3 w1
+# new game: difficulty, Get Psyched
+tap up
+run 20
+tap 1
+run 100
+expect scr_cur == 5 w1
+tap 1
+run 100
+expect scr_cur == 16 w1
+run 500
+expect game_frames > 3 w2
+expectvdp display 1
+# the in-game menu (the console's pause button) has the in-game items and gives the game back
+pause
+run 150
+expect scr_cur == 4 w1
+tap 2
+run 200
+expect game_frames > 3 w2

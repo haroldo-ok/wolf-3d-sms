@@ -1,0 +1,11 @@
+# benchmark: turning in place at the E1M1 start (every ray changes every frame)
+symbols build_dbg/game.noi
+run 300
+poke dbg_god 1 w1
+print game_frames w2
+cgstart
+hold left
+run 240
+cgstop
+cgdump /tmp/s/cg_turn.txt
+print game_frames w2

@@ -1,0 +1,9 @@
+# a damage flash fades out (it used to stay on: decay by the last step instead of the frame)
+symbols build_dbg/game.noi
+run 300
+poke damagecount 80 w2
+run 30
+expect damagecount > 0 w2
+run 150
+expect damagecount == 0 w2
+screenshot /tmp/s/t_flash.ppm

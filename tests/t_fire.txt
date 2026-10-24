@@ -1,0 +1,37 @@
+# rapid tapping of the fire button (down 14 vblanks, up 10: faster than a frame) keeps firing; a
+# latch that only ORs the samples made the button look held forever: one shot, then nothing.
+# The pistol's own animation (24 tics) and the frame length limit it to about every other press.
+symbols build_dbg/game.noi
+run 300
+poke dbg_wx 34 w1
+poke dbg_wy 21 w1
+poke dbg_wdir 0 w1
+poke dbg_warp 1 w1
+run 20
+expect dbg_ammo == 8 w2
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+hold 1
+run 14
+hold none
+run 10
+run 60
+expect dbg_ammo <= 5 w2

@@ -1,0 +1,24 @@
+# benchmark: warp into the guard room of E1M1 (33,11) facing north: statics and an enemy in view, then walk and turn
+symbols build_dbg/game.noi
+run 300
+poke dbg_god 1 w1
+poke dbg_wx 33 w1
+poke dbg_wy 14 w1
+poke dbg_wdir 0 w1
+poke dbg_warp 1 w1
+run 40
+print game_frames w2
+cgstart
+hold up
+run 60
+hold right
+run 60
+hold up
+run 60
+hold left
+run 60
+cgstop
+cgdump /tmp/s/cg_room.txt
+print game_frames w2
+print dbg_tx w1
+print dbg_ty w1

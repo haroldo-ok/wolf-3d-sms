@@ -1,0 +1,26 @@
+# A frame of the game takes several vblanks.  A tap shorter than that must still reach the game, as a fresh
+# press for the buttons and as a proportional move for the directions (independent of the speed of the game:
+# every wait is "the next game frame starts")
+symbols build_dbg/game.noi
+run 400
+# tap button 1 for 2 vblanks right after a frame started (the next poll is a few vblanks away)
+waitchange game_frames 900 w2
+hold 1
+run 2
+hold none
+waituntil pad_now == 16 40 w1
+# a 1 vblank tap of LEFT: a fraction of the frame, not 0 and not all of it
+waitchange game_frames 900 w2
+waitchange game_frames 900 w2
+hold left
+run 1
+hold none
+waituntil pad_f_left > 8 40 w2
+expect pad_f_left < 200 w2
+expect pad_f_right == 0 w2
+# held for several frames: the whole time
+waitchange game_frames 900 w2
+waitchange game_frames 900 w2
+hold left
+waituntil pad_f_left == 256 100 w2
+hold none

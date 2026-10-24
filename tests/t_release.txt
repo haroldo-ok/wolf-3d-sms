@@ -1,0 +1,13 @@
+# the release ROM (no debug hooks): PG-13, title, menu, new game, Get Psyched, and then the play screen keeps drawing
+symbols build/game.noi
+run 380
+tap 1
+run 90
+tap 1
+run 80
+tap 1
+run 600
+expectvdp display 1
+expect game_frames > 3 w2
+expectpace 0
+screenshot /tmp/s/t_release.ppm

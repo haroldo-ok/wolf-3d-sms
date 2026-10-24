@@ -1,0 +1,10 @@
+# enemies hurt: a guard that sees the player takes his health down, the red flash comes and goes
+symbols build_dbg/game.noi
+run 300
+poke dbg_wx 33 w1
+poke dbg_wy 11 w1
+poke dbg_wdir 0 w1
+poke dbg_warp 1 w1
+run 300
+expect dbg_hp < 100 w2
+screenshot /tmp/s/t_hurt.ppm

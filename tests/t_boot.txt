@@ -1,0 +1,12 @@
+# boots straight into E1M1: display on, frames are being drawn, HUD values are right
+symbols build_dbg/game.noi
+run 300
+expectvdp display 1
+expect game_frames > 3 w2
+expect dbg_hp == 100 w2
+expect dbg_ammo == 8 w2
+expect dbg_lives == 3 w2
+expect dbg_tx == 29 w1
+expect dbg_ty == 57 w1
+expectpace 0
+screenshot /tmp/s/t_boot.ppm

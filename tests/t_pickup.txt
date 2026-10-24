@@ -1,0 +1,17 @@
+# the secret room of E1M1: two clips (+8 each), then the machine gun (+6 ammo and the weapon)
+symbols build_dbg/game.noi
+run 300
+poke dbg_wx 28 w1
+poke dbg_wy 22 w1
+poke dbg_wdir 2 w1
+poke dbg_warp 1 w1
+run 30
+expect dbg_ammo == 8 w2
+hold up
+run 200
+hold none
+run 40
+expect dbg_ammo == 30 w2
+expect dbg_ty == 25 w1
+expectpace 0
+screenshot /tmp/s/t_pickup.ppm

@@ -1,0 +1,15 @@
+# standing in front of the guards until they kill the player: death cam, a life lost, the level
+# restarts at its start tile with full health and play goes on
+symbols build_dbg/game.noi
+run 300
+poke dbg_wx 33 w1
+poke dbg_wy 11 w1
+poke dbg_wdir 0 w1
+poke dbg_warp 1 w1
+run 1400
+expect dbg_lives == 2 w2
+expect dbg_hp == 100 w2
+expect dbg_tx == 29 w1
+expect dbg_ty == 57 w1
+expect dbg_ps == 0 w2
+screenshot /tmp/s/t_death.ppm

@@ -1,0 +1,20 @@
+# open the start door (button 2) and walk through two doors: the player ends up past x=36
+symbols build_dbg/game.noi
+run 400
+hold up
+run 70
+hold 2
+run 50
+hold none
+run 120
+hold up
+run 400
+hold 2
+run 50
+hold none
+run 150
+hold up
+run 200
+expect dbg_tx >= 38 w1
+expect dbg_ty == 57 w1
+screenshot /tmp/s/t_walk.ppm
