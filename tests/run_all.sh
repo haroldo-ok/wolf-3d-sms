@@ -30,8 +30,13 @@ expect dbg_stepchk == 0 w2
 expect dbg_xfchk == 0 w2
 expect dbg_addchk == 0 w2
 expect dbg_ivchk == 0 w2
+expect dbg_sndchk == 0 w2
+expect dbg_bkchk == 0 w2
+expect dbg_umulchk == 0 w2
+expect dbg_tmchk == 0 w2
+expect dbg_tpchk == 0 w2
 EOF
 out=$(bash tools/st.sh wolf3d_det.sms /tmp/s/selfcheck.txt 2>&1)
-if echo "$out" | grep -q "RESULT: ALL PASSED"; then echo "PASS self checks (act, mul, step, xform, add_sprite, in_view)"; else echo "FAIL self checks"; echo "$out" | grep -i fail | head; fail=1; fi
+if echo "$out" | grep -q "RESULT: ALL PASSED"; then echo "PASS self checks (act, mul, step, xform, add_sprite, in_view, snd, buckets, umul, trymove, tpath)"; else echo "FAIL self checks"; echo "$out" | grep -i fail | head; fail=1; fi
 if python3 tests/check_view.py /tmp/s/t_release.ppm | tail -1 | grep -q PASS; then echo "PASS tests/check_view.py"; else echo "FAIL tests/check_view.py"; fail=1; fi
 exit $fail

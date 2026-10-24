@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "def.h"
 /* wl_play.c - the play loop, actor list and controls (port of WL_PLAY.C) */
 #include <string.h>
@@ -116,8 +117,9 @@ void PollControls (void) B
             buttonheld[bt_use] = TRUE;
         }
     }
-    ctly = (s16)(((s32)BASEMOVE * ((s16)pad_f_down - (s16)pad_f_up)) >> 8);
-    ctlx = (s16)(((s32)BASEMOVE * ((s16)pad_f_right - (s16)pad_f_left)) >> 8);
+    /* the fractions are 0..256: BASEMOVE * (-256..256) fits in 16 bits, no 32 bit multiply needed */
+    ctly = (s16)(BASEMOVE * ((s16)pad_f_down - (s16)pad_f_up)) >> 8;
+    ctlx = (s16)(BASEMOVE * ((s16)pad_f_right - (s16)pad_f_left)) >> 8;
 }
 
 static void StepControls(void)
@@ -275,90 +277,27 @@ void FinishPaletteShifts (void) B
 
 /* ------------------------------------------------------------- actors */
 
-static void DoActor(objtype *ob)
-{
-    u8 think;
+void run_actors(void);          /* actors_a.s */
+typedef char chk_actors_a[(offsetof(objtype, active) == 0 && offsetof(objtype, areanumber) == 22
+                           && offsetof(objtype, next) == 45 && sizeof(boolean) == 1) ? 1 : -1];
 
-    if (!ob->active && !areabyplayer[ob->areanumber])
-        return;
+/* tpath_fast (fast.s): the common case of T_Path */
+typedef char chk_tpath_fast[(offsetof(objtype, flags) == 6 && offsetof(objtype, distance) == 7
+                             && offsetof(objtype, dir) == 11 && offsetof(objtype, x) == 12
+                             && offsetof(objtype, y) == 16 && offsetof(objtype, areanumber) == 22
+                             && offsetof(objtype, speed) == 35 && offsetof(objtype, temp2) == 41
+                             && FL_ATTACKMODE == 16 && nodir == 8 && east == 0 && northeast == 1
+                             && north == 2 && northwest == 3 && west == 4 && southwest == 5
+                             && south == 6 && southeast == 7 && sizeof(boolean) == 1) ? 1 : -1];
 
-    if (!(ob->flags & (FL_NONMARK | FL_NEVERMARK)))
-        actorat[ob->tilex][ob->tiley] = 0;
-
-    if (!ob->ticcount)
-    {
-        think = ob->state->think;
-        if (think)
-        {
-            think_call(think, ob);
-            if (!ob->state)
-            {
-                RemoveObj(ob);
-                return;
-            }
-        }
-
-        if (ob->flags & FL_NEVERMARK)
-            return;
-
-        if ((ob->flags & FL_NONMARK) && actorat[ob->tilex][ob->tiley])
-            return;
-
-        actorat[ob->tilex][ob->tiley] = act_enc(ob);
-        return;
-    }
-
-    ob->ticcount -= tics;
-    while (ob->ticcount <= 0)
-    {
-        think = ob->state->action;
-        if (think)
-        {
-            action_call(think, ob);
-            if (!ob->state)
-            {
-                RemoveObj(ob);
-                return;
-            }
-        }
-
-        ob->state = ob->state->next;
-
-        if (!ob->state)
-        {
-            RemoveObj(ob);
-            return;
-        }
-
-        if (!ob->state->tictime)
-        {
-            ob->ticcount = 0;
-            goto dothink;
-        }
-
-        ob->ticcount += ob->state->tictime;
-    }
-
-dothink:
-    think = ob->state->think;
-    if (think)
-    {
-        think_call(think, ob);
-        if (!ob->state)
-        {
-            RemoveObj(ob);
-            return;
-        }
-    }
-
-    if (ob->flags & FL_NEVERMARK)
-        return;
-
-    if ((ob->flags & FL_NONMARK) && actorat[ob->tilex][ob->tiley])
-        return;
-
-    actorat[ob->tilex][ob->tiley] = act_enc(ob);
-}
+/* DoActor, the step of one actor, is in actors_a.s too (git history has the C) */
+typedef char chk_doactor_a[(offsetof(objtype, ticcount) == 1 && offsetof(objtype, state) == 4
+                            && offsetof(objtype, flags) == 6 && offsetof(objtype, tilex) == 20
+                            && offsetof(objtype, tiley) == 21 && offsetof(objtype, enc) == 49
+                            && offsetof(statetype, tictime) == 3 && offsetof(statetype, think) == 5
+                            && offsetof(statetype, action) == 6 && offsetof(statetype, next) == 7
+                            && FL_NEVERMARK == 4 && FL_NONMARK == 128 && MAPSIZE == 64
+                            && sizeof(actorat[0]) == 64) ? 1 : -1];
 
 /* --------------------------------------------------------------- music */
 
@@ -419,8 +358,7 @@ void PlayLoop (void) B
             MoveDoors();
             MovePWalls();
 
-            for (obj = player; obj; obj = obj->next)
-                DoActor(obj);
+            run_actors();               /* for (obj = player; obj; obj = obj->next) DoActor(obj); */
             gamestate.TimeCount += tics;
         }
         tics = total;               /* the whole frame: the palette shifts decay by it */

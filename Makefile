@@ -40,7 +40,7 @@ BANK5   = src/vid.c src/hud.c src/input.c src/weapon.c src/inter.c $(if $(filter
 BANK6   = src/scr.c src/menu.c gen/scr_tab.c
 BANK7   = src/save.c
 BANK8   = src/snd_ctl.c gen/snd_tab.c
-BANK9   =
+BANK9   = $(if $(filter 1,$(DET)),src/dbg2.c)
 BANK10  =
 BANK11  =
 BANK12  =
@@ -52,7 +52,7 @@ BANKS   = $(foreach b,1 2 3 4 5 6 7 8 9 10 11 12 13 14 15,$(if $(BANK$(b)),$(b))
 rel = $(OUT)/$(notdir $(1:.c=.rel))
 FIXED_REL  = $(foreach f,$(FIXED),$(call rel,$(f)))
 BANKED_REL = $(foreach b,$(BANKS),$(foreach f,$(BANK$(b)),$(call rel,$(f))))
-ASM_REL    = $(OUT)/crt0.rel $(OUT)/header.rel $(OUT)/render_a.rel $(OUT)/cartsyms.rel $(OUT)/mulfix.rel $(OUT)/fast.rel $(OUT)/sprites_a.rel
+ASM_REL    = $(OUT)/crt0.rel $(OUT)/header.rel $(OUT)/render_a.rel $(OUT)/cartsyms.rel $(OUT)/mulfix.rel $(OUT)/fast.rel $(OUT)/sprites_a.rel $(OUT)/actors_a.rel $(OUT)/snd_a.rel $(OUT)/agent_a.rel
 HDRS       = $(wildcard src/*.h src/game/*.h) gen/assets.h
 
 all: $(ROM)
@@ -74,6 +74,12 @@ $(OUT)/mulfix.rel: src/mulfix.s | $(OUT)
 $(OUT)/fast.rel: src/fast.s gen/assets.inc | $(OUT)
 	$(AS) -plosgff -o $@ $<
 $(OUT)/sprites_a.rel: src/sprites_a.s gen/assets.inc | $(OUT)
+	$(AS) -plosgff -o $@ $<
+$(OUT)/actors_a.rel: src/actors_a.s | $(OUT)
+	$(AS) -plosgff -o $@ $<
+$(OUT)/agent_a.rel: src/agent_a.s | $(OUT)
+	$(AS) -plosgff -o $@ $<
+$(OUT)/snd_a.rel: src/snd_a.s | $(OUT)
 	$(AS) -plosgff -o $@ $<
 $(OUT)/cartsyms.rel: src/cartsyms.s | $(OUT)
 	$(AS) -plosgff -o $@ $<

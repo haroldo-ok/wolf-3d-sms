@@ -295,6 +295,12 @@ static u16 pad_frac(u8 cnt, u8 n, u8 live)
 {
     if (!n)
         return live ? 256 : 0;
+    /* a direction is nearly always held for all of the samples or for none: no division then
+     * (exactly (cnt << 8) / n for cnt == 0 and cnt == n) */
+    if (!cnt)
+        return 0;
+    if (cnt == n)
+        return 256;
     return (u16)(((u16)cnt << 8) / n);
 }
 

@@ -149,10 +149,14 @@ work), and a direction moves the player for as long as it was held within the fr
   each optimisation (the C originals), so "PASS" means the faster code plays and draws exactly the same game.
   `python3 tests/det/det.py --update NAME` re-records scenarios (only after checking that a difference is
   intended); `--rom/--noi` run another build.
-* `src/dbg.c` (DET build only) compares each hand written routine with the C code it replaced, over many inputs:
-  `act_dec`, `mul_tics`, `LineStep`, the projection (`xf_tile`, `xf_obj`: 4800 tiles and positions on both sides
-  of the view), `add_sprite` (random sequences, also past the full list) and `in_view` (every offset x 52
-  bearings).  `run_all.sh` asserts that all the counters are zero.
+* `src/dbg.c` and `src/dbg2.c` (DET build only; `dbg2.c` is in bank 9, bank 5 was full) compare each hand written
+  routine with the C code it replaced, over many inputs: `act_dec`, `mul_tics`, `LineStep`, the projection
+  (`xf_tile`, `xf_obj`: 4800 tiles and positions on both sides of the view), `add_sprite` (random sequences, also
+  past the full list), `in_view` (every offset x 52 bearings), the sound player (`snd_step` against the C on
+  every song and effect stream, tick by tick; `snd_mix` on 3000 random mixer states), `rd_buckets` (random
+  sprite lists and column states), the 16 x 16 multiply (edge and random operands against shift and add),
+  `TryMove` (random places and next to actors) and `tpath_fast` against `T_Path` (random directions,
+  distances, speeds, step lengths).  `run_all.sh` asserts that all the counters are zero.
 * Benchmarks: `python3 tools/bench.py walk turn room` (scripts in `tests/bench/`, on `wolf3d_dbg.sms` in real
   time), `tools/prof_wolf.py` (call-graph profile of a bench run: self and inclusive cycles per function, bank
   aware; `--callers F`, `--tree F`, `--asm F`).  `python3 tools/docshots.py` makes the pictures in `docs/`.
@@ -173,8 +177,8 @@ work), and a direction moves the player for as long as it was held within the fr
 * **VRAM**: view 288 tiles + 3 flat + HUD 112 + weapon <= 28 = 431 < 448 (`wl_hud.py` asserts).  `HUD_T0` = 291;
   the 112 HUD tiles are static 78, face 16, weapon icon 18, and the weapon sprites follow.
 * **Banks**: slot 0 (0x0000 - 0x3FFF) is bank 0, always mapped: `main hw snd render mathz level plat0`, the asm
-  and the generated tables.  It has **399 bytes free** in the release build (99 in debug, 582 in DET), so it is
-  full: new code goes into the banked banks.  Those are switched into slot 1 (0x4000 - 0x7FFF): 1 - 4 the game
+  and the generated tables.  It has **700 bytes free** in the release build (400 in debug, 115 in DET), so it is
+  nearly full: new code goes into the banked banks.  Those are switched into slot 1 (0x4000 - 0x7FFF): 1 - 4 the game
   (`wl_play/main/game` + the random table, `wl_agent`, `wl_state/act1`, `wl_act2`), 5 `vid hud input weapon
   inter`, 6 `scr menu` + the screen tables, 7 `save`, 8 `snd_ctl` + the sound tables.  Slot 2 (0x8000 - 0xBFFF)
   shows the cart RAM during play (the level) or, mapped by the code that needs it, a bank of the data
@@ -187,20 +191,36 @@ work), and a direction moves the player for as long as it was held within the fr
 
 ### Speed
 
-smstest, NTSC, game frames per second (192 x 96 view, sound on): walking through the first rooms and doors 10.8;
-turning in place (every ray changes) 4.2; a room with enemies and statics, moving and turning 3.0.  (The 224 x 80
-view before the front end: 12.3 / 4.5 / 3.5; 5.7 / 3.0 / 2.25 before the optimisation pass.)  What was done, by
-the profile: the sprite pipeline (culling, projection, list insertion, the per column lists, the sprite rays) is
-Z80 (`src/sprites_a.s`), statics near the camera are listed once per camera tile, the projection of a tile centre
-needs only 4 bit multiplies, 32 bit multiplies and divisions in the actor code were replaced (`mul_tics`,
-`LineStep`, `act_enc`), `CheckPickups`, `MoveDoors`, `AreaOf` and the exit tile test don't repeat work, the
-palette flash is a table and is written only when it changes, and a moving view redraws only the columns whose
-rays differ from the screen.
+smstest, NTSC, game frames per second (192 x 96 view, sound on, `tools/bench.py`): walking through the first
+rooms and doors **16.7**; turning in place (every ray changes) **5.0**; a room with enemies and statics, moving
+and turning **4.0**.  (Before the second optimisation pass: 10.8 / 4.2 / 3.0.  The 224 x 80 view before the
+front end: 12.3 / 4.5 / 3.5; 5.7 / 3.0 / 2.25 before the first optimisation pass.)  The turning and room runs
+are 16 - 20 game frames, so one frame is about 6%; the walking run is 250 - 290.  What was done, by the
+profile:
+
+* the sprite pipeline (culling, projection, list insertion, the per column lists - `rd_buckets` -, the sprite
+  rays) is Z80 (`src/sprites_a.s`), statics near the camera are listed once per camera tile, and the projection
+  of a tile centre needs only 4 bit multiplies;
+* the actor loop: `run_actors` and `DoActor` are Z80 (`src/actors_a.s`, bank 1; inactive actors that are not near
+  the player are skipped without a call), `T_Path`'s common case is `tpath_fast` in bank 0 (`fast.s`, called by
+  `think_call` before the banked `T_Path`), `SightPlayer`'s own early out is `SIGHT_SKIP`, and `TryMove`'s tile
+  tests are `trymove_a` (`src/agent_a.s`, bank 2);
+* arithmetic: the 16 x 16 -> 32 multiply is two unrolled 8 x 16 passes (`mulfix.s`, ~550 cycles, was ~1000),
+  `mul_tics` is unrolled, and the 32 bit multiplies and divisions of the actor code were replaced (`LineStep`,
+  `act_enc`); the pad polling uses 16 bit products;
+* the banked-call trampoline reads and writes the mapper register in line (`fast.s`: ~130 cycles a call, was
+  ~210);
+* the sound player's two inner loops (`snd_step`, `snd_mix`, `src/snd_a.s`, bank 0) run 70 times a second from the
+  frame interrupt: ~190 + ~900 cycles instead of ~1000 + ~2200 for the C;
+* `CheckPickups`, `MoveDoors`, `AreaOf` and the exit tile test don't repeat work, the palette flash is a table
+  and is written only when it changes, and a moving view redraws only the columns whose rays differ from the
+  screen.
 
 What is left is mostly the VRAM copy (`s2_rows`: 4 bytes per tile row, 27 cycles apart as the VDP requires): the
 view's 288 tiles are 9,216 bytes, 249 k cycles, **4.2 console frames** whatever else is done.  When every column
 is redrawn that is about 29% of a game frame (turning in place), and it caps a full redraw at about 14 frames a
-second before a single ray is cast.
+second before a single ray is cast.  Next on the profile of walking: `in_view` (called ~10,000 times in the
+bench), `xf_post`, `T_Path`'s slow path and `MoveObj`.
 
 ### Toolchain pitfalls
 
@@ -231,11 +251,12 @@ second before a single ray is cast.
 |---|---|
 | `Makefile` | the banked build: three flavours, `NOGEN=1` |
 | `src/` | the platform layer and the engine, in C and Z80 asm (`crt0.s`, `header.s`: boot and ROM header; `cartram.h`, `cartsyms.s`: the cart RAM map) |
-| `src/hw.c` `render.c` `render_a.s` `sprites_a.s` `fast.s` `mulfix.s` `mathz.c` `level.c` `plat0.c` | bank 0: hardware and interrupts, the ray caster and the sprite pipeline, hand-written Z80 helpers, maths, the level's ROM data, timer |
+| `src/hw.c` `render.c` `render_a.s` `sprites_a.s` `fast.s` `mulfix.s` `snd_a.s` `mathz.c` `level.c` `plat0.c` | bank 0: hardware and interrupts, the ray caster and the sprite pipeline, hand-written Z80 helpers (`fast.s`: banked calls, `mul_tics`, `tpath_fast`), maths, the sound player's loops, the level's ROM data, timer |
+| `src/actors_a.s` `agent_a.s` | banked Z80: the actor loop and `DoActor` (bank 1), `TryMove`'s tile tests (bank 2) |
 | `src/vid.c` `hud.c` `weapon.c` `input.c` | video modes and fades, the status bar, the weapon sprites, the pad |
 | `src/scr.c` `menu.c` `inter.c` `save.c` `ui.h` | the front end: screen loader, menus and help pages, intermission / scores / title, save games |
-| `src/snd.c` `snd_ctl.c` `snd.h` | the sound player: interrupt side (bank 0), control (banked) |
-| `src/dbg.c` | the DET build's state hash and self checks |
+| `src/snd.c` `snd_a.s` `snd_ctl.c` `snd.h` | the sound player: interrupt side (bank 0), control (banked) |
+| `src/dbg.c` `dbg2.c` | the DET build's state hash and self checks (`dbg2.c`: bank 9) |
 | `src/game/` | the game logic: `wl_play wl_agent wl_state wl_act1 wl_act2 wl_game wl_main`, `def.h` |
 | `gen/` | `states.c`, `states.h`; everything else is made by `make` |
 | `tools/build_assets.py` | runs the converters below, packs `gen/data.bin` into banks |

@@ -111,8 +111,8 @@ void think_call(u8 think, objtype *ob)
 {
     switch (think)
     {
-    case TH_T_Stand: T_Stand(ob); break;
-    case TH_T_Path: T_Path(ob); break;
+    case TH_T_Stand: if (!SIGHT_SKIP(ob)) T_Stand(ob); break;
+    case TH_T_Path: if (!tpath_fast(ob)) T_Path(ob); break;
     case TH_T_Chase: T_Chase(ob); break;
     case TH_T_DogChase: T_DogChase(ob); break;
     case TH_T_BJRun: T_BJRun(ob); break;

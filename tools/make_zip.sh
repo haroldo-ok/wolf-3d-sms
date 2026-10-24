@@ -11,7 +11,7 @@ rm -f "$out"
 cd ..
 {
     find "$name" -type f \
-        ! -path "$name/build*" ! -path "$name/gen/*" ! -path "$name/work/*" \
+        ! -path "$name/.git/*" ! -path "$name/build*" ! -path "$name/gen/*" ! -path "$name/work/*" \
         ! -path '*/__pycache__/*' ! -name '*.pyc' ! -name '*.sms' ! -path "$name/tools/smstest/smstest"
     echo "$name/gen/states.c"
     echo "$name/gen/states.h"

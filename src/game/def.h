@@ -324,6 +324,9 @@ void SelectDodgeDir(objtype *ob) B;
 void SelectRunDir(objtype *ob) B;
 void MoveObj(objtype *ob, s32 move) B;
 boolean SightPlayer(objtype *ob) B;
+/* true when SightPlayer(ob) would return FALSE at once with no side effect (not reacting yet, the area is not
+ * connected to the player's): the banked call can be skipped */
+#define SIGHT_SKIP(ob)  (!((ob)->flags & FL_ATTACKMODE) && !(ob)->temp2 && !areabyplayer[(ob)->areanumber])
 void KillActor(objtype *ob) B;
 void DamageActor(objtype *ob, u16 damage) B;
 boolean CheckLine(objtype *ob) B;

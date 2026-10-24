@@ -245,6 +245,7 @@ static void check_addsprite(void)
     numvis = 0;
 }
 
+
 /* mul_tics and LineStep against the expressions they replace (0: all correct) */
 u16 dbg_mulchk, dbg_stepchk;
 s16 LineStep(s16 delta, s16 deltafrac) B;
@@ -270,6 +271,8 @@ static void check_math(void)
         }
 }
 
+
+void dbg_checks2(void) B;
 u8 dbg_full, dbg_sv_diff;
 u16 dbg_sec[8], dbg_sec0[8];
 u16 dbg_f0[24], dbg_f1[24];
@@ -381,6 +384,7 @@ void dbg_state_hash(void) B
         check_xform();
         check_addsprite();
         dbg_check_inview();
+        dbg_checks2();          /* dbg2.c (bank 9) */
     }
     h = 0x1234;
     p = (const u8 *)&gamestate;

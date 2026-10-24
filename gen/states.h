@@ -22,6 +22,7 @@ void T_Bite(objtype *ob) __banked;
 void T_BJYell(objtype *ob) __banked;
 void T_BJDone(objtype *ob) __banked;
 void think_call(u8 think, objtype *ob);
+u8 tpath_fast(objtype *ob);      /* fast.s: the common case of T_Path */
 void action_call(u8 action, objtype *ob);
 
 #define s_grdstand (states[0])

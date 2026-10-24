@@ -700,7 +700,8 @@ void A_DeathScream (objtype *ob) B
 
 void T_Stand (objtype *ob) B
 {
-	SightPlayer (ob);
+	if (!SIGHT_SKIP (ob))			// (think_call skips the call too)
+		SightPlayer (ob);
 }
 
 
@@ -950,7 +951,7 @@ void T_Path (objtype *ob) B
 	s32 	move;
 	s32 	deltax,deltay,size;
 
-	if (SightPlayer (ob))
+	if (!SIGHT_SKIP (ob) && SightPlayer (ob))
 		return;
 
 	if (ob->dir == nodir)

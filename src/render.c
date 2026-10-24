@@ -94,8 +94,9 @@ u8  col_sig[NRAYS * 4];
 u8  col_info[VIEW_TW * 4];
 void rd_sig(void);
 void rd_ext(u8 chg);
-static u16 col_spr[VIEW_TW], spr_new[VIEW_TW];
-static u8  spr_any;
+u16 col_spr[VIEW_TW], spr_new[VIEW_TW];   /* (rd_buckets in sprites_a.s) */
+u8  spr_any;
+void rd_buckets(void);
 static u8  sig_colors = 0xFF;
 static u8  sig_reset = 1;           /* col_sig doesn't describe the screen: forget it (every column is drawn) */
 extern u8 render_cast_dirty;
@@ -184,9 +185,7 @@ extern u8 col_lst[VIEW_TW][MAXVISIBLE];
 void render_draw(void)
 {
     u8 old1 = MapSlot1, old2 = slot2_cur;
-    u8 tc, i;
-    u8 *ci;
-    VisSprite *v;
+    u8 i;
 
     MapSlot1 = RD_BANK;
     slot2_map(TEX_BANK0);           /* cart RAM off: slot 2 = ROM */
@@ -214,44 +213,9 @@ void render_draw(void)
         rd_ext(0);
     cast_mode = 0;
 
-    /* sprites: one pass per sprite over the tile columns it covers */
+    /* sprites: which reach each tile column (rd_buckets, sprites_a.s) */
     if (numvis || spr_any)
-    {
-        memset(spr_new, 0, sizeof(spr_new));
-        memset(col_ns, 0, sizeof(col_ns));
-        for (i = 0, v = vissprites; i < numvis; i++, v++)
-        {
-            s16 a0 = v->x0 >> 3, a1 = (v->x0 + (s16)v->width - 1) >> 3;
-            u8 s = v->s, ya, yb;
-            u16 sig;
-            if (a0 < 0) a0 = 0;
-            if (a1 > VIEW_TW - 1) a1 = VIEW_TW - 1;
-            if (a0 > a1) continue;
-            ya = s > VIEW_CY ? 0 : VIEW_CY - s;
-            yb = s > VIEW_CY ? VIEW_H : VIEW_CY + s;
-            sig = (u16)v->x0 + ((u16)s << 6) + ((u16)v->shape << 9) + v->width + 1;
-            ci = col_info + ((u8)a0 << 2);
-            for (tc = (u8)a0; tc <= (u8)a1; tc++, ci += 4)
-            {
-                if (s >= ci[3])
-                {
-                    col_lst[tc][col_ns[tc]++] = i;
-                    spr_new[tc] += sig;
-                    if (ya < ci[1]) ci[1] = ya;
-                    if (yb > ci[2]) ci[2] = yb;
-                }
-            }
-        }
-        spr_any = numvis;
-        for (tc = 0, ci = col_info; tc < VIEW_TW; tc++, ci += 4)
-        {
-            if (spr_new[tc] != col_spr[tc])
-            {
-                col_spr[tc] = spr_new[tc];
-                ci[0] = 1;
-            }
-        }
-    }
+        rd_buckets();
     rd_cols();
     MapSlot1 = old1;
     slot2_map(old2);

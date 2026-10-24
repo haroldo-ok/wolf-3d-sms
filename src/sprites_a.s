@@ -1166,3 +1166,245 @@ rs_ray: ex      de,hl                   ; de = l
         ld      a,(_s1_rdbank)
         ld      (#0xFFFE),a
         ret
+
+;; ---------------------------------------------------------------------------------------------------------------
+;; void rd_buckets(void): the sprite part of render_draw (render.c): which sprites reach each tile column.
+;;   spr_new[] = 0, col_ns[] = 0
+;;   per visible sprite i (far to near): tile columns a0..a1 it covers (clamped to the view); in each where it is
+;;   not behind the nearest wall of the column (s >= col_info[tc].3): col_lst[tc][col_ns[tc]++] = i, the column's
+;;   signature spr_new[tc] += x0 + (s << 6) + (shape << 9) + width + 1, its row range col_info[tc].1 / .2 widened
+;;   to the sprite's (VIEW_CY -+ s, clamped).
+;;   spr_any = numvis; columns whose signature changed: col_spr[tc] = spr_new[tc], col_info[tc].0 = 1.
+;; The same arithmetic as the C it replaces (16 bit, wrapping); IX / IY / the alternate set are not used.
+        .area   _DATA
+rb_cnt: .ds     1
+rb_i:   .ds     1
+rb_s:   .ds     1
+rb_ya:  .ds     1
+rb_yb:  .ds     1
+rb_sig: .ds     2
+        .area   _CODE
+        .globl  _rd_buckets, _spr_new, _col_spr, _spr_any, _col_info, _numvis, _vissprites
+_rd_buckets::
+        xor     a,a
+        ld      hl,#_spr_new
+        ld      b,#2 * VIEW_TW
+1$:     ld      (hl),a
+        inc     hl
+        djnz    1$
+        ld      hl,#_col_ns
+        ld      b,#VIEW_TW
+2$:     ld      (hl),a
+        inc     hl
+        djnz    2$
+        ld      (rb_i),a
+        ld      a,(_numvis)
+        or      a,a
+        jp      z,rb_cmp
+        ld      (rb_cnt),a
+        ld      hl,#_vissprites
+rb_spr:                                 ; hl = the sprite
+        ld      e,(hl)
+        inc     hl
+        ld      d,(hl)                  ; de = x0
+        inc     hl
+        ld      c,(hl)
+        inc     hl
+        ld      b,(hl)                  ; bc = width
+        inc     hl
+        ld      a,(hl)                  ; s
+        ld      (rb_s),a
+        inc     hl
+        push    hl                      ; -> shape
+        ;; ya / yb: the rows of the sprite
+        cp      a,#VIEW_CY + 1
+        jr      c,3$
+        xor     a,a                     ; s > VIEW_CY: the whole height
+        ld      (rb_ya),a
+        ld      a,#VIEW_H
+        ld      (rb_yb),a
+        jr      4$
+3$:     ld      l,a
+        add     a,#VIEW_CY
+        ld      (rb_yb),a
+        ld      a,#VIEW_CY
+        sub     a,l
+        ld      (rb_ya),a
+4$:     ;; sig = x0 + width + 1 + (s << 6) + (shape << 9)
+        ld      h,d
+        ld      l,e
+        add     hl,bc                   ; x0 + width
+        push    hl
+        inc     hl
+        ld      a,(rb_s)
+        ld      c,a
+        ld      b,#0
+        sla     c                       ; bc = s << 6
+        rl      b
+        sla     c
+        rl      b
+        sla     c
+        rl      b
+        sla     c
+        rl      b
+        sla     c
+        rl      b
+        sla     c
+        rl      b
+        add     hl,bc
+        pop     bc                      ; bc = x0 + width
+        ex      (sp),hl                 ; hl -> shape, (sp) = sig so far
+        ld      a,(hl)
+        ex      (sp),hl                 ; hl = sig so far, (sp) -> shape
+        add     a,a                     ; (shape << 9) >> 8
+        add     a,h
+        ld      h,a
+        ld      (rb_sig),hl
+        ;; a1 = (x0 + width - 1) >> 3, clamped to VIEW_TW - 1; negative: not in the view
+        dec     bc
+        bit     7,b
+        jp      nz,rb_skip
+        ld      a,b
+        or      a,a
+        ld      a,#VIEW_TW - 1
+        jr      nz,5$
+        ld      a,c
+        cp      a,#VIEW_TW * 8
+        ld      a,#VIEW_TW - 1
+        jr      nc,5$
+        ld      a,c
+        rrca
+        rrca
+        rrca
+        and     a,#0x1F
+5$:     ld      c,a                     ; c = a1
+        ;; a0 = x0 >> 3, at least 0; past the view: nothing
+        bit     7,d
+        ld      a,#0
+        jr      nz,6$
+        ld      a,d
+        or      a,a
+        jp      nz,rb_skip
+        ld      a,e
+        cp      a,#VIEW_TW * 8
+        jp      nc,rb_skip
+        rrca
+        rrca
+        rrca
+        and     a,#0x1F
+6$:     ;; a = a0, c = a1
+        ld      b,a
+        ld      a,c
+        sub     a,b
+        jp      c,rb_skip               ; a0 > a1
+        inc     a
+        ld      c,b                     ; c = tc = a0
+        ld      b,a                     ; b = columns
+        ld      l,c
+        ld      h,#0
+        add     hl,hl
+        add     hl,hl
+        ld      de,#_col_info + 3
+        add     hl,de                   ; hl = &col_info[tc].3
+rb_tc:
+        ld      a,(rb_s)
+        cp      a,(hl)
+        jr      c,rb_tcnext             ; behind the wall of this column
+        push    bc
+        push    hl
+        ld      b,#0
+        ld      hl,#_col_ns
+        add     hl,bc
+        ld      e,(hl)                  ; e = col_ns[tc]++
+        inc     (hl)
+        ld      l,c
+        ld      h,b
+        add     hl,hl
+        push    hl                      ; tc * 2
+        add     hl,hl
+        add     hl,hl
+        add     hl,hl
+        add     hl,hl                   ; tc * 32
+        ld      d,b
+        add     hl,de
+        ld      de,#_col_lst
+        add     hl,de
+        ld      a,(rb_i)
+        ld      (hl),a                  ; col_lst[tc][n] = i
+        pop     hl
+        ld      de,#_spr_new
+        add     hl,de
+        ld      a,(rb_sig)
+        add     a,(hl)
+        ld      (hl),a
+        inc     hl
+        ld      a,(rb_sig + 1)
+        adc     a,(hl)
+        ld      (hl),a                  ; spr_new[tc] += sig
+        pop     hl
+        dec     hl                      ; .2: the bottom row
+        ld      a,(rb_yb)
+        cp      a,(hl)
+        jr      c,7$
+        jr      z,7$
+        ld      (hl),a
+7$:     dec     hl                      ; .1: the top row
+        ld      a,(rb_ya)
+        cp      a,(hl)
+        jr      nc,8$
+        ld      (hl),a
+8$:     inc     hl
+        inc     hl
+        pop     bc
+rb_tcnext:
+        inc     hl
+        inc     hl
+        inc     hl
+        inc     hl
+        inc     c
+        djnz    rb_tc
+        jr      rb_nexts
+rb_skip:
+rb_nexts:
+        pop     hl                      ; -> shape
+        inc     hl                      ; the next sprite
+        ld      a,(rb_i)
+        inc     a
+        ld      (rb_i),a
+        ld      a,(rb_cnt)
+        dec     a
+        ld      (rb_cnt),a
+        jp      nz,rb_spr
+rb_cmp:
+        ld      a,(_numvis)
+        ld      (_spr_any),a
+        ld      hl,#_spr_new
+        ld      de,#_col_spr
+        ld      bc,#_col_info
+9$:     ld      a,(de)
+        cp      a,(hl)
+        jr      nz,10$
+        inc     hl
+        inc     de
+        ld      a,(de)
+        cp      a,(hl)
+        jr      nz,11$
+        jr      12$
+10$:    ld      a,(hl)
+        ld      (de),a
+        inc     hl
+        inc     de
+11$:    ld      a,(hl)
+        ld      (de),a
+        ld      a,#1
+        ld      (bc),a                  ; col_info[tc].0: changed
+12$:    inc     hl
+        inc     de
+        inc     bc
+        inc     bc
+        inc     bc
+        inc     bc
+        ld      a,c
+        cp      a,#<(_col_info + 4 * VIEW_TW)
+        jr      nz,9$
+        ret

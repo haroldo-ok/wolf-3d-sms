@@ -57,6 +57,7 @@ def main(srcdir, outdir, files):
         if t not in thinks:
             h.append('void %s(objtype *ob) __banked;' % t)
     h.append('void think_call(u8 think, objtype *ob);')
+    h.append('u8 tpath_fast(objtype *ob);      /* fast.s: the common case of T_Path */')
     h.append('void action_call(u8 action, objtype *ob);')
     h.append('')
     for s in states:
@@ -76,8 +77,13 @@ def main(srcdir, outdir, files):
     c.append('{')
     c.append('    switch (think)')
     c.append('    {')
+    # no banked call when the think routine would do nothing (T_Stand), or when bank 0 does its common case (T_Path)
+    guard = {'T_Stand': 'SIGHT_SKIP(ob)', 'T_Path': 'tpath_fast(ob)'}
     for t in thinks:
-        c.append('    case TH_%s: %s(ob); break;' % (t, t))
+        if t in guard:
+            c.append('    case TH_%s: if (!%s) %s(ob); break;' % (t, guard[t], t))
+        else:
+            c.append('    case TH_%s: %s(ob); break;' % (t, t))
     c.append('    }')
     c.append('}')
     c.append('')

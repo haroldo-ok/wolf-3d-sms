@@ -9,6 +9,7 @@
 #include "hw.h"
 #include "snd.h"
 #include <string.h>
+#include <stddef.h>
 
 u8 SoundOn = 1, MusicOn = 1, DigiOn = 1;      /* DigiOn: 0 none, 1 voices, 2 all */
 
@@ -23,92 +24,20 @@ const u8 *pcm_src;
 u16 pcm_left;                           /* frames */
 u8 pcm_buf[192 + 16];                   /* 96 samples of two bytes and silence for a few more interrupts */
 
+/* the offsets snd_a.s uses */
+typedef char chk_voice[(offsetof(Voice, on) == 0 && offsetof(Voice, bank) == 1 && offsetof(Voice, p) == 2
+                        && offsetof(Voice, wait) == 4 && offsetof(Voice, per) == 8 && offsetof(Voice, vol) == 14
+                        && offsetof(Voice, nctl) == 18) ? 1 : -1];
+
 #ifdef DEBUG_DET
 /* the deterministic test build has no sound: nothing in the interrupt that depends on timing */
 void pcm_stop(void) {}
 void snd_frame(void) { snd_ticks = 0; }
 #else
-static void silence(Voice *v)
-{
-    v->vol[0] = v->vol[1] = v->vol[2] = v->vol[3] = 15;
-}
-
-static void step(Voice *v)
-{
-    u8 b, ch;
-    u16 off;
-    if (!v->on || --v->wait)
-        return;
-    MapCtrl = 0;
-    MapSlot2 = v->bank;
-    for (;;)
-    {
-        b = *v->p++;
-        if (!b)
-        {
-            off = v->p[0] | (v->p[1] << 8);
-            if (!off)
-            {
-                v->on = 0;
-                silence(v);
-                return;
-            }
-            v->p = v->p - 1 - off;
-            continue;
-        }
-        if (!(b & 0x80))
-        {
-            v->wait = b;
-            return;
-        }
-        ch = (b >> 5) & 3;
-        v->vol[ch] = b & 15;
-        if (b & 0x10)
-        {
-            if (ch == 3)
-                v->nctl = *v->p++;
-            else
-            {
-                v->per[ch] = v->p[0] | (v->p[1] << 8);
-                v->p += 2;
-            }
-        }
-    }
-}
-
-static void mix(void)
-{
-    const Voice *s;
-    u8 ch, v;
-    u16 p;
-    for (ch = 0; ch < 4; ch++)
-    {
-        if (pcm_on && (ch == 1 || ch == 2))
-            continue;
-        s = (sfx.on && ch >= 2) ? &sfx : &mus;
-        if (ch < 3)
-        {
-            p = s->per[ch];
-            if (p != cur_per[ch])
-            {
-                cur_per[ch] = p;
-                PSGPort = 0x80 | (ch << 5) | (p & 15);
-                PSGPort = (u8)(p >> 4) & 0x3F;
-            }
-        }
-        else if (s->nctl != cur_nctl)
-        {
-            cur_nctl = s->nctl;
-            PSGPort = 0xE0 | (cur_nctl & 7);
-        }
-        v = s->vol[ch];
-        if (v != cur_vol[ch])
-        {
-            cur_vol[ch] = v;
-            PSGPort = 0x90 | (ch << 5) | v;
-        }
-    }
-}
+/* snd_step (one tick of a voice's stream) and snd_mix (what the PSG needs to be told): snd_a.s.  The C versions
+ * they replace took 1000 and 2200 cycles a call, 70 times a second. */
+void snd_step(Voice *v);
+void snd_mix(void);
 
 void pcm_stop(void)
 {
@@ -149,13 +78,13 @@ void snd_frame(void)
         pcm_stop();
     for (k = snd_ticks; k; k--)
     {
-        step(&mus);
-        step(&sfx);
+        snd_step(&mus);
+        snd_step(&sfx);
     }
     snd_ticks = 0;
     if (pcm_on == 1)
         pcm_refill();
-    mix();
+    snd_mix();
     MapSlot2 = bank2;
     MapCtrl = ctrl;
 }

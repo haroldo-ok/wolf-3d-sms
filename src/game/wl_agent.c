@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "def.h"
 // WL_AGENT.C
 
@@ -713,11 +714,20 @@ void CheckPickups (void) B
 ===================
 */
 
+u8 trymove_a(objtype *ob);		/* agent_a.s (this bank): the test for an object well inside the map */
+typedef char chk_trymove_a[(PLAYERSIZE == 0x5800 && MINACTORDIST == 0x10000l && offsetof(objtype, x) == 12
+                            && offsetof(objtype, y) == 16 && offsetof(objtype, flags) == 6
+                            && FL_SHOOTABLE == 1 && MAPSIZE == 64) ? 1 : -1];
+
 boolean TryMove (objtype *ob) B
 {
 	s16			xl,yl,xh,yh,x,y;
 	objtype		*check;
 	s32			deltax,deltay;
+	u8			r = trymove_a (ob);
+
+	if (r != 2)
+		return r;
 
 	xl = (ob->x-PLAYERSIZE) >>TILESHIFT;
 	yl = (ob->y-PLAYERSIZE) >>TILESHIFT;

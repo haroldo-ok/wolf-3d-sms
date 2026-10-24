@@ -1,94 +1,114 @@
-# warp 2 tiles in front of a standing guard (33,9) and shoot: he dies, 100 points
+# warp 1 tile in front of a standing guard (33,9) and shoot: he dies, 100 points
 # (this failed while the compiler left garbage in player->tilex, which made CheckLine fail;
-# 20 shots because the guard moves about and the pistol damage is random)
+# 24 shots because the guard moves about and the pistol damage is random)
+# The fire button goes down for one frame of the game and up for the next (as in tests/det fight): a press per
+# two frames of the game whatever the speed of the build (presses timed in console frames, from 2 tiles away,
+# made the outcome depend on how fast the game runs: the guard could walk out of the line of fire).
 symbols build_dbg/game.noi
 run 300
 poke dbg_god 1 w1
 poke dbg_wx 33 w1
-poke dbg_wy 11 w1
+poke dbg_wy 10 w1
 poke dbg_wdir 0 w1
 poke dbg_warp 1 w1
-run 14
+waitchange game_frames 200
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
 hold 1
-run 14
+waitchange game_frames 200
 hold none
-run 10
+waitchange game_frames 200
+hold 1
+waitchange game_frames 200
+hold none
+waitchange game_frames 200
+hold 1
+waitchange game_frames 200
+hold none
+waitchange game_frames 200
+hold 1
+waitchange game_frames 200
+hold none
+waitchange game_frames 200
+hold 1
+waitchange game_frames 200
+hold none
+waitchange game_frames 200
 expect dbg_tx == 33 w1
 expect dbg_kills >= 1 w2
 expect dbg_score >= 100 w2

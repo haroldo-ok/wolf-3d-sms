@@ -48,17 +48,113 @@ ___mulsint2slong:
         ld      h,a
         ret
 
-;; 16x16 -> 32 unsigned: HL * DE -> DEHL
+;; 16x16 -> 32 unsigned: HL * DE -> HL:DE (high word HL, low word DE)
+;; Two unrolled 8 x 16 bit passes (the low, then the high byte of HL) instead of 16 turns of a loop on IY:
+;; ~550 cycles instead of ~1000; 0 in the high byte of HL (common) skips the second pass.
+;; In each step A:HL (24 bits) shifts left: the multiplier's next bit (from A) comes out in carry.
 ___muluint2ulong:
-        ld      iy,#0
-        ld      b,#16
-3$:     add     iy,iy
-        adc     hl,hl
-        jr      nc,4$
-        add     iy,de
-        jr      nc,4$
-        inc     hl
-4$:     djnz    3$
-        push    iy
-        pop     de
+        ld      c,h                     ; c = the high byte of the multiplier
+        ld      a,l
+        ld      hl,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        ld      b,a
+        ld      a,c
+        or      a,a
+        jr      nz,5$
+        ex      de,hl                   ; high byte 0: A:HL = the product (24 bits)
+        ld      l,b
+        ld      h,a
+        ret
+5$:     push    hl                      ; b:hl = low byte * DE
+        ld      hl,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        add     hl,hl
+        rla
+        jr      nc,.+5
+        add     hl,de
+        adc     a,#0
+        pop     de                      ; a:hl = high byte * DE; result = b:de + (a:hl << 8)
+        ld      c,a
+        ld      a,d
+        add     a,l
+        ld      d,a
+        ld      a,b
+        adc     a,h
+        ld      l,a
+        ld      a,c
+        adc     a,#0
+        ld      h,a
         ret
